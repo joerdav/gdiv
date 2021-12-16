@@ -74,11 +74,5 @@ func LoadArgs() (cfg Config, err error) {
 	}
 	b, _ := os.ReadFile(path)
 	cfg.GitPat = strings.TrimSpace(string(b))
-
-	if cfg.GitPat == "" {
-		err = errors.New("pat not found")
-		return
-	}
-
 	return
 }
