@@ -27,7 +27,7 @@ func main() {
 	for _, r := range repos {
 		go func(r string) {
 			a, b, err := client.getDiff(context.Background(), cfg.Org, r, cfg.Base, cfg.Head)
-			if err == nil {
+			if err == nil && (a+b > 0 || cfg.ShowAll) {
 				ch <- writeRow(r, fmt.Sprintf("ahead by %d, behind by %d", a, b))
 				return
 			}

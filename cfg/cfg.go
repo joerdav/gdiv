@@ -33,7 +33,7 @@ func LoadArgs() (cfg Config, err error) {
 	}
 	flag.StringVar(&cmd.patPath, "pat-path", "", "A file containing your github PAT.")
 	flag.StringVar(&cmd.pat, "pat", "", "Your github PAT.")
-	flag.BoolVar(&cmd.all, "a", false, "Show all repos including failed searches.")
+	flag.BoolVar(&cmd.all, "a", false, "Show all repos including up to date branches and failed searches.")
 	flag.BoolVar(&cmd.help, "h", false, "Show help text.")
 	flag.Parse()
 
