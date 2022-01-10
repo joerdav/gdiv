@@ -28,7 +28,7 @@ func LoadArgs() (cfg Config, err error) {
 	var cmd cmdArgs
 
 	flag.Usage = func() {
-		fmt.Println("usage: gdiv [owner] [base] [head]")
+		fmt.Println("usage: gdiv [owner] [base] [head] [-pat | -path-path] ")
 		flag.PrintDefaults()
 	}
 	flag.StringVar(&cmd.patPath, "pat-path", "", "A file containing your github PAT.")
@@ -38,8 +38,8 @@ func LoadArgs() (cfg Config, err error) {
 	flag.Parse()
 
 	args := flag.Args()
-	if len(args) != 3 {
-		err = errors.New("missing arguments")
+	if cmd.pat == "" && cmd.patPath == "" {
+		err = errors.New("Either pat or pat-path must be provided")
 		flag.Usage()
 		return
 	}
@@ -56,15 +56,18 @@ func LoadArgs() (cfg Config, err error) {
 		ShowAll: cmd.all,
 	}
 
-	if cfg.GitPat != "" {
-		return
+	if cfg.GitPat == "" {
+		cfg.GitPat = loadFromPath(cmd.patPath)
 	}
 
+	return
+}
+
+func loadFromPath(p string) string {
 	path := defaultPath
-	if cmd.patPath != "" {
-		path = cmd.patPath
+	if path != "" {
+		path = p
 	}
-
 	usr, _ := user.Current()
 	dir := usr.HomeDir
 	if path == "~" {
@@ -73,6 +76,5 @@ func LoadArgs() (cfg Config, err error) {
 		path = filepath.Join(dir, path[2:])
 	}
 	b, _ := os.ReadFile(path)
-	cfg.GitPat = strings.TrimSpace(string(b))
-	return
+	return strings.TrimSpace(string(b))
 }
