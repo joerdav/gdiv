@@ -28,7 +28,7 @@ func LoadArgs() (cfg Config, err error) {
 	var cmd cmdArgs
 
 	flag.Usage = func() {
-		fmt.Println("usage: gdiv [owner] [base] [head] [-pat | -path-path] ")
+		fmt.Println("usage: gdiv [owner] [base] [head] [-pat | -pat-path] ")
 		flag.PrintDefaults()
 	}
 	flag.StringVar(&cmd.patPath, "pat-path", "", "A file containing your github PAT.")
