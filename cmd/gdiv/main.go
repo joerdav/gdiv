@@ -26,13 +26,13 @@ func main() {
 	ch := make(chan string, len(repos))
 	for _, r := range repos {
 		go func(r string) {
-			a, b, err := client.getDiff(context.Background(), cfg.Org, r, cfg.Base, cfg.Head)
-			if err == nil && (a+b > 0 || cfg.ShowAll) {
-				ch <- writeRow(r, fmt.Sprintf("ahead by %d, behind by %d", a, b))
+			diff, err := client.getDiff(context.Background(), cfg.Org, r, cfg.Base, cfg.Head)
+			if err == nil && (diff.Ahead+diff.Behind > 0 || cfg.ShowAll) {
+				ch <- writeDiff(r, diff)
 				return
 			}
 			if cfg.ShowAll {
-				ch <- writeRow(r, err.Error())
+				ch <- writeError(r, err)
 				return
 			}
 			ch <- ""
@@ -43,8 +43,20 @@ func main() {
 	}
 }
 
-func writeRow(reponame, message string) string {
-	return fmt.Sprintln(reponame, strings.Repeat(" ", 45-len(reponame)), message)
+func writeDiff(repoName string, diff Diff) string {
+	sb := new(strings.Builder)
+	sb.WriteString(writeRow(repoName, fmt.Sprintf("ahead by %d, behind by %d", diff.Ahead, diff.Behind)))
+	sb.WriteString(writeRow("", fmt.Sprintf("  %s -> %s", diff.BaseHash, diff.HeadHash)))
+	sb.WriteString(writeRow("", "  "+diff.URL))
+	return sb.String()
+}
+
+func writeError(repoName string, err error) string {
+	return fmt.Sprintln(repoName, strings.Repeat(" ", 45-len(repoName)), err.Error())
+}
+
+func writeRow(repoName, message string) string {
+	return fmt.Sprintln(repoName, strings.Repeat(" ", 45-len(repoName)), message)
 }
 
 type gitClient struct {
@@ -75,7 +87,15 @@ func (cli gitClient) getRepos(org string) (names []string, err error) {
 	return
 }
 
-func (cli gitClient) getDiff(ctx context.Context, org, repo, base, head string) (ahead int, behind int, err error) {
+type Diff struct {
+	BaseHash string
+	HeadHash string
+	URL      string
+	Ahead    int
+	Behind   int
+}
+
+func (cli gitClient) getDiff(ctx context.Context, org, repo, base, head string) (diff Diff, err error) {
 	m, _, err := cli.client.Repositories.GetBranch(ctx, org, repo, base, true)
 	if err != nil {
 		return
@@ -88,7 +108,10 @@ func (cli gitClient) getDiff(ctx context.Context, org, repo, base, head string) 
 	if err != nil {
 		return
 	}
-	ahead = r.GetAheadBy()
-	behind = r.GetBehindBy()
+	diff.BaseHash = m.GetCommit().GetSHA()
+	diff.HeadHash = s.GetCommit().GetSHA()
+	diff.URL = r.GetHTMLURL()
+	diff.Ahead = r.GetAheadBy()
+	diff.Behind = r.GetBehindBy()
 	return
 }
