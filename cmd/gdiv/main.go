@@ -24,18 +24,30 @@ func main() {
 		panic(err)
 	}
 	ch := make(chan string, len(repos))
+	wd := writeDiff
+	if cfg.Short {
+		wd = writeShort
+	}
 	for _, r := range repos {
 		go func(r string) {
 			diff, err := client.getDiff(context.Background(), cfg.Org, r, cfg.Base, cfg.Head)
-			if err == nil && (diff.Ahead+diff.Behind > 0 || cfg.ShowAll) {
-				ch <- writeDiff(r, diff)
+			if err != nil && !cfg.ShowAll {
+				ch <- ""
 				return
 			}
-			if cfg.ShowAll {
+			if cfg.AheadOnly && diff.Ahead == 0 {
+				ch <- ""
+				return
+			}
+			if cfg.BehindOnly && diff.Behind == 0 {
+				ch <- ""
+				return
+			}
+			if err != nil {
 				ch <- writeError(r, err)
 				return
 			}
-			ch <- ""
+			ch <- wd(r, diff, cfg)
 		}(r)
 	}
 	for range repos {
@@ -43,11 +55,31 @@ func main() {
 	}
 }
 
-func writeDiff(repoName string, diff Diff) string {
+func writeDiff(repoName string, diff Diff, cfg cfg.Config) string {
 	sb := new(strings.Builder)
-	sb.WriteString(writeRow(repoName, fmt.Sprintf("ahead by %d, behind by %d", diff.Ahead, diff.Behind)))
+	msg := []string{}
+	if cfg.AheadOnly || !cfg.BehindOnly {
+		msg = append(msg, fmt.Sprintf("ahead by %d", diff.Ahead))
+	}
+	if !cfg.AheadOnly || cfg.BehindOnly {
+		msg = append(msg, fmt.Sprintf("ahead by %d", diff.Ahead))
+	}
+	sb.WriteString(writeRow(repoName, strings.Join(msg, ", ")))
 	sb.WriteString(writeRow("", fmt.Sprintf("  %s -> %s", diff.BaseHash, diff.HeadHash)))
 	sb.WriteString(writeRow("", "  "+diff.URL))
+	return sb.String()
+}
+func writeShort(repoName string, diff Diff, cfg cfg.Config) string {
+	sb := new(strings.Builder)
+	msg := []string{}
+	if cfg.AheadOnly || !cfg.BehindOnly {
+		msg = append(msg, fmt.Sprintf("ahead by %d", diff.Ahead))
+	}
+	if !cfg.AheadOnly || cfg.BehindOnly {
+		msg = append(msg, fmt.Sprintf("behind by %d", diff.Behind))
+	}
+	msg = append(msg, diff.URL)
+	sb.WriteString(writeRow(repoName, strings.Join(msg, ", ")))
 	return sb.String()
 }
 
