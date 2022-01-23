@@ -58,11 +58,11 @@ func main() {
 func writeDiff(repoName string, diff Diff, cfg cfg.Config) string {
 	sb := new(strings.Builder)
 	msg := []string{}
-	if cfg.AheadOnly || !cfg.BehindOnly {
+	if cfg.AheadOnly || (!cfg.AheadOnly && !cfg.BehindOnly) {
 		msg = append(msg, fmt.Sprintf("ahead by %d", diff.Ahead))
 	}
-	if !cfg.AheadOnly || cfg.BehindOnly {
-		msg = append(msg, fmt.Sprintf("ahead by %d", diff.Ahead))
+	if cfg.BehindOnly || (!cfg.AheadOnly && !cfg.BehindOnly) {
+		msg = append(msg, fmt.Sprintf("behind by %d", diff.Behind))
 	}
 	sb.WriteString(writeRow(repoName, strings.Join(msg, ", ")))
 	sb.WriteString(writeRow("", fmt.Sprintf("  %s -> %s", diff.BaseHash, diff.HeadHash)))
@@ -72,10 +72,10 @@ func writeDiff(repoName string, diff Diff, cfg cfg.Config) string {
 func writeShort(repoName string, diff Diff, cfg cfg.Config) string {
 	sb := new(strings.Builder)
 	msg := []string{}
-	if cfg.AheadOnly || !cfg.BehindOnly {
+	if cfg.AheadOnly || (!cfg.AheadOnly && !cfg.BehindOnly) {
 		msg = append(msg, fmt.Sprintf("ahead by %d", diff.Ahead))
 	}
-	if !cfg.AheadOnly || cfg.BehindOnly {
+	if cfg.BehindOnly || (!cfg.AheadOnly && !cfg.BehindOnly) {
 		msg = append(msg, fmt.Sprintf("behind by %d", diff.Behind))
 	}
 	msg = append(msg, diff.URL)

@@ -30,7 +30,7 @@ func LoadArgs() (cfg Config, err error) {
 	var cmd cmdArgs
 
 	flag.Usage = func() {
-		fmt.Println("usage: gdiv [owner] [base] [head] [-pat | -pat-path] ")
+		fmt.Println("usage: gdiv [options] [owner] [base] [head] [-pat | -pat-path] ")
 		flag.PrintDefaults()
 	}
 	flag.StringVar(&cmd.patPath, "pat-path", "", "A file containing your github PAT.")
@@ -45,7 +45,7 @@ func LoadArgs() (cfg Config, err error) {
 
 	args := flag.Args()
 	if cmd.pat == "" && cmd.patPath == "" {
-		err = errors.New("Either pat or pat-path must be provided")
+		err = errors.New("either pat or pat-path must be provided")
 		flag.Usage()
 		return
 	}
@@ -54,7 +54,7 @@ func LoadArgs() (cfg Config, err error) {
 		return
 	}
 	if cmd.aheadOnly && cmd.behindOnly {
-		err = errors.New("You can only use -ahead and -behind exclusively.")
+		err = errors.New("you can only use -ahead and -behind exclusively")
 		return
 	}
 
