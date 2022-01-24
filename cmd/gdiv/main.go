@@ -35,6 +35,10 @@ func main() {
 				ch <- ""
 				return
 			}
+			if err != nil {
+				ch <- writeError(r, err)
+				return
+			}
 			if cfg.ShowAll {
 				ch <- wd(r, diff, cfg)
 				return
@@ -49,10 +53,6 @@ func main() {
 			}
 			if cfg.BehindOnly && diff.Behind == 0 {
 				ch <- ""
-				return
-			}
-			if err != nil {
-				ch <- writeError(r, err)
 				return
 			}
 			ch <- wd(r, diff, cfg)
@@ -70,7 +70,7 @@ func writeDiff(repoName string, diff Diff, cfg cfg.Config) string {
 		msg = append(msg, fmt.Sprintf("ahead by %d", diff.Ahead))
 	}
 	if !cfg.AheadOnly || cfg.BehindOnly {
-		msg = append(msg, fmt.Sprintf("ahead by %d", diff.Ahead))
+		msg = append(msg, fmt.Sprintf("behind by %d", diff.Behind))
 	}
 	sb.WriteString(writeRow(repoName, strings.Join(msg, ", ")))
 	sb.WriteString(writeRow("", fmt.Sprintf("  %s -> %s", diff.BaseHash, diff.HeadHash)))
