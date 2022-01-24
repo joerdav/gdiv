@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	_ "embed"
 	"fmt"
@@ -50,8 +51,20 @@ func main() {
 			ch <- wd(r, diff, cfg)
 		}(r)
 	}
-	for range repos {
-		fmt.Print(<-ch)
+	if cfg.OneLine {
+		var b bytes.Buffer
+		for range repos {
+			var t = <-ch
+			if t != "" {
+				b.WriteString(t)
+				b.WriteString("\\n")
+			}
+		}
+		fmt.Print(b.String())
+	} else {
+		for range repos {
+			fmt.Print(<-ch)
+		}
 	}
 }
 
@@ -64,9 +77,9 @@ func writeDiff(repoName string, diff Diff, cfg cfg.Config) string {
 	if cfg.BehindOnly || (!cfg.AheadOnly && !cfg.BehindOnly) {
 		msg = append(msg, fmt.Sprintf("behind by %d", diff.Behind))
 	}
-	sb.WriteString(writeRow(repoName, strings.Join(msg, ", ")))
-	sb.WriteString(writeRow("", fmt.Sprintf("  %s -> %s", diff.BaseHash, diff.HeadHash)))
-	sb.WriteString(writeRow("", "  "+diff.URL))
+	sb.WriteString(writeRow(repoName, strings.Join(msg, ", "), cfg.OneLine))
+	sb.WriteString(writeRow("", fmt.Sprintf("  %s -> %s", diff.BaseHash, diff.HeadHash), cfg.OneLine))
+	sb.WriteString(writeRow("", "  "+diff.URL, cfg.OneLine))
 	return sb.String()
 }
 func writeShort(repoName string, diff Diff, cfg cfg.Config) string {
@@ -79,7 +92,8 @@ func writeShort(repoName string, diff Diff, cfg cfg.Config) string {
 		msg = append(msg, fmt.Sprintf("behind by %d", diff.Behind))
 	}
 	msg = append(msg, diff.URL)
-	sb.WriteString(writeRow(repoName, strings.Join(msg, ", ")))
+
+	sb.WriteString(writeRow(repoName, strings.Join(msg, ", "), cfg.OneLine))
 	return sb.String()
 }
 
@@ -87,7 +101,10 @@ func writeError(repoName string, err error) string {
 	return fmt.Sprintln(repoName, strings.Repeat(" ", 45-len(repoName)), err.Error())
 }
 
-func writeRow(repoName, message string) string {
+func writeRow(repoName, message string, oneline bool) string {
+	if oneline {
+		return fmt.Sprint(repoName, strings.Repeat(" ", 45-len(repoName)), message)
+	}
 	return fmt.Sprintln(repoName, strings.Repeat(" ", 45-len(repoName)), message)
 }
 

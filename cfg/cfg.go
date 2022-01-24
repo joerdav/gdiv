@@ -13,17 +13,17 @@ import (
 const defaultPath = "~/.gdivpat"
 
 type cmdArgs struct {
-	pat, patPath          string
-	org, head, base       string
-	aheadOnly, behindOnly bool
-	all, help, short      bool
+	pat, patPath              string
+	org, head, base           string
+	aheadOnly, behindOnly     bool
+	all, help, short, oneLine bool
 }
 
 type Config struct {
-	GitPat                string
-	Org, Head, Base       string
-	AheadOnly, BehindOnly bool
-	ShowAll, Short        bool
+	GitPat                  string
+	Org, Head, Base         string
+	AheadOnly, BehindOnly   bool
+	ShowAll, Short, OneLine bool
 }
 
 func LoadArgs() (cfg Config, err error) {
@@ -40,6 +40,7 @@ func LoadArgs() (cfg Config, err error) {
 	flag.BoolVar(&cmd.aheadOnly, "ahead", false, "Show only the aheadBy number.")
 	flag.BoolVar(&cmd.behindOnly, "behind", false, "Show only the behindBy number.")
 	flag.BoolVar(&cmd.short, "s", false, "Show a short version of the output.")
+	flag.BoolVar(&cmd.oneLine, "o", false, "Put the output on one line with \n as breaks.")
 
 	flag.Parse()
 
@@ -67,6 +68,7 @@ func LoadArgs() (cfg Config, err error) {
 		Short:      cmd.short,
 		AheadOnly:  cmd.aheadOnly,
 		BehindOnly: cmd.behindOnly,
+		OneLine:    cmd.oneLine,
 	}
 
 	if cfg.GitPat == "" {
