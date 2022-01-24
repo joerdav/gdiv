@@ -13,24 +13,24 @@ import (
 const defaultPath = "~/.gdivpat"
 
 type cmdArgs struct {
-	pat, patPath          string
-	org, head, base       string
-	aheadOnly, behindOnly bool
-	all, help, short      bool
+	pat, patPath              string
+	org, head, base           string
+	aheadOnly, behindOnly     bool
+	all, help, short, oneLine bool
 }
 
 type Config struct {
-	GitPat                string
-	Org, Head, Base       string
-	AheadOnly, BehindOnly bool
-	ShowAll, Short        bool
+	GitPat                  string
+	Org, Head, Base         string
+	AheadOnly, BehindOnly   bool
+	ShowAll, Short, OneLine bool
 }
 
 func LoadArgs() (cfg Config, err error) {
 	var cmd cmdArgs
 
 	flag.Usage = func() {
-		fmt.Println("usage: gdiv [owner] [base] [head] [-pat | -pat-path] ")
+		fmt.Println("usage: gdiv [options] [owner] [base] [head] [-pat | -pat-path] ")
 		flag.PrintDefaults()
 	}
 	flag.StringVar(&cmd.patPath, "pat-path", "", "A file containing your github PAT.")
@@ -40,12 +40,13 @@ func LoadArgs() (cfg Config, err error) {
 	flag.BoolVar(&cmd.aheadOnly, "ahead", false, "Show only the aheadBy number.")
 	flag.BoolVar(&cmd.behindOnly, "behind", false, "Show only the behindBy number.")
 	flag.BoolVar(&cmd.short, "s", false, "Show a short version of the output.")
+	flag.BoolVar(&cmd.oneLine, "o", false, "Put the output on one line with \n as breaks.")
 
 	flag.Parse()
 
 	args := flag.Args()
 	if cmd.pat == "" && cmd.patPath == "" {
-		err = errors.New("Either pat or pat-path must be provided")
+		err = errors.New("either pat or pat-path must be provided")
 		flag.Usage()
 		return
 	}
@@ -54,7 +55,7 @@ func LoadArgs() (cfg Config, err error) {
 		return
 	}
 	if cmd.aheadOnly && cmd.behindOnly {
-		err = errors.New("You can only use -ahead and -behind exclusively.")
+		err = errors.New("you can only use -ahead and -behind exclusively")
 		return
 	}
 
@@ -67,6 +68,7 @@ func LoadArgs() (cfg Config, err error) {
 		Short:      cmd.short,
 		AheadOnly:  cmd.aheadOnly,
 		BehindOnly: cmd.behindOnly,
+		OneLine:    cmd.oneLine,
 	}
 
 	if cfg.GitPat == "" {
