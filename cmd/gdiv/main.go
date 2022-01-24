@@ -35,6 +35,14 @@ func main() {
 				ch <- ""
 				return
 			}
+			if cfg.ShowAll {
+				ch <- wd(r, diff, cfg)
+				return
+			}
+			if diff.Behind == 0 && diff.Ahead == 0 {
+				ch <- ""
+				return
+			}
 			if cfg.AheadOnly && diff.Ahead == 0 {
 				ch <- ""
 				return
@@ -108,15 +116,26 @@ func newGitClient(token string) gitClient {
 	return gitClient{client}
 }
 
-func (cli gitClient) getRepos(org string) (names []string, err error) {
-	rs, _, err := cli.client.Repositories.ListByOrg(context.Background(), org, &github.RepositoryListByOrgOptions{})
-	if err != nil {
-		return
+func (cli gitClient) getRepos(org string) ([]string, error) {
+	var names []string
+	opt := &github.RepositoryListByOrgOptions{
+		ListOptions: github.ListOptions{PerPage: 100},
 	}
-	for _, r := range rs {
-		names = append(names, r.GetName())
+	// get all pages of results
+	for {
+		repos, resp, err := cli.client.Repositories.ListByOrg(context.Background(), org, opt)
+		if err != nil {
+			return names, err
+		}
+		for _, r := range repos {
+			names = append(names, r.GetName())
+		}
+		if resp.NextPage == 0 {
+			break
+		}
+		opt.Page = resp.NextPage
 	}
-	return
+	return names, nil
 }
 
 type Diff struct {
