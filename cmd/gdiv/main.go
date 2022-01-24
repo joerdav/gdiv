@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	_ "embed"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -24,6 +26,7 @@ func main() {
 		panic(err)
 	}
 	ch := make(chan string, len(repos))
+	ds := make(chan Diff, len(repos))
 	wd := writeDiff
 	if cfg.Short {
 		wd = writeShort
@@ -33,30 +36,51 @@ func main() {
 			diff, err := client.getDiff(context.Background(), cfg.Org, r, cfg.Base, cfg.Head)
 			if err != nil && !cfg.ShowAll {
 				ch <- ""
+				ds <- Diff{}
 				return
 			}
 			if err != nil {
 				ch <- writeError(r, err)
+				ds <- Diff{}
 				return
 			}
 			if cfg.ShowAll {
 				ch <- wd(r, diff, cfg)
+				ds <- diff
 				return
 			}
 			if diff.Behind == 0 && diff.Ahead == 0 {
 				ch <- ""
+				ds <- Diff{}
 				return
 			}
 			if cfg.AheadOnly && diff.Ahead == 0 {
 				ch <- ""
+				ds <- Diff{}
 				return
 			}
 			if cfg.BehindOnly && diff.Behind == 0 {
 				ch <- ""
+				ds <- Diff{}
 				return
 			}
 			ch <- wd(r, diff, cfg)
+			ds <- diff
 		}(r)
+	}
+	if cfg.Json {
+		var diffs []Diff
+		for range repos {
+			d := <-ds
+			if d.Name == "" {
+				continue
+			}
+			diffs = append(diffs, d)
+		}
+		b := new(bytes.Buffer)
+		json.NewEncoder(b).Encode(diffs)
+		fmt.Print(b.String())
+		return
 	}
 	for range repos {
 		fmt.Print(<-ch)
@@ -139,11 +163,12 @@ func (cli gitClient) getRepos(org string) ([]string, error) {
 }
 
 type Diff struct {
-	BaseHash string
-	HeadHash string
-	URL      string
-	Ahead    int
-	Behind   int
+	Name     string `json:"name"`
+	BaseHash string `json:"baseHash"`
+	HeadHash string `json:"headHash"`
+	URL      string `json:"url"`
+	Ahead    int    `json:"ahead"`
+	Behind   int    `json:"behind"`
 }
 
 func (cli gitClient) getDiff(ctx context.Context, org, repo, base, head string) (diff Diff, err error) {
@@ -164,5 +189,6 @@ func (cli gitClient) getDiff(ctx context.Context, org, repo, base, head string) 
 	diff.URL = r.GetHTMLURL()
 	diff.Ahead = r.GetAheadBy()
 	diff.Behind = r.GetBehindBy()
+	diff.Name = repo
 	return
 }
