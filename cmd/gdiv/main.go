@@ -180,7 +180,7 @@ func (cli gitClient) getDiff(ctx context.Context, org, repo, base, head string) 
 	if err != nil {
 		return
 	}
-	r, _, err := cli.client.Repositories.CompareCommits(ctx, org, repo, s.GetName(), m.GetName(), nil)
+	r, _, err := cli.client.Repositories.CompareCommits(ctx, org, repo, m.GetName(), s.GetName(), nil)
 	if err != nil {
 		return
 	}
