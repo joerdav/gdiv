@@ -25,7 +25,7 @@ other-api                                      ahead by 1, behind by 0
 Install the package:
 
 ```
-go install github.com/joe-davidson1802/gdiv/cmd/gdiv@latest
+go install github.com/joerdav/gdiv/cmd/gdiv@latest
 ```
 
 (Optional) Configure your GitHub Personal Access Token.

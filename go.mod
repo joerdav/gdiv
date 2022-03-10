@@ -1,4 +1,4 @@
-module github.com/joe-davidson1802/gdiv
+module github.com/joerdav/gdiv
 
 go 1.16
 
