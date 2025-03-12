@@ -21,7 +21,7 @@ func main() {
 		os.Exit(1)
 	}
 	client := newGitClient(cfg.GitPat)
-	repos, err := client.getRepos(cfg.Org)
+	repos, err := client.getRepos(cfg.Org, cfg.InclArchived)
 	if err != nil {
 		panic(err)
 	}
@@ -140,7 +140,7 @@ func newGitClient(token string) gitClient {
 	return gitClient{client}
 }
 
-func (cli gitClient) getRepos(org string) ([]string, error) {
+func (cli gitClient) getRepos(org string, ia bool) ([]string, error) {
 	var names []string
 	opt := &github.RepositoryListByOrgOptions{
 		ListOptions: github.ListOptions{PerPage: 100},
@@ -152,6 +152,9 @@ func (cli gitClient) getRepos(org string) ([]string, error) {
 			return names, err
 		}
 		for _, r := range repos {
+			if r.GetArchived() && !ia {
+				continue
+			}
 			names = append(names, r.GetName())
 		}
 		if resp.NextPage == 0 {

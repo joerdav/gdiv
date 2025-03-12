@@ -13,17 +13,17 @@ import (
 const defaultPath = "~/.gdivpat"
 
 type cmdArgs struct {
-	pat, patPath           string
-	org, head, base        string
-	aheadOnly, behindOnly  bool
-	all, help, short, json bool
+	pat, patPath                         string
+	org, head, base                      string
+	aheadOnly, behindOnly                bool
+	all, help, short, json, inclArchived bool
 }
 
 type Config struct {
-	GitPat                string
-	Org, Head, Base       string
-	AheadOnly, BehindOnly bool
-	ShowAll, Short, Json  bool
+	GitPat                             string
+	Org, Head, Base                    string
+	AheadOnly, BehindOnly              bool
+	ShowAll, Short, Json, InclArchived bool
 }
 
 func LoadArgs() (cfg Config, err error) {
@@ -41,6 +41,7 @@ func LoadArgs() (cfg Config, err error) {
 	flag.BoolVar(&cmd.behindOnly, "behind", false, "Show only the behindBy number.")
 	flag.BoolVar(&cmd.short, "s", false, "Show a short version of the output.")
 	flag.BoolVar(&cmd.json, "json", false, "Output as json.")
+	flag.BoolVar(&cmd.inclArchived, "include-archived", false, "Include repos that are archived")
 
 	flag.Parse()
 
@@ -60,15 +61,16 @@ func LoadArgs() (cfg Config, err error) {
 	}
 
 	cfg = Config{
-		GitPat:     cmd.pat,
-		Org:        args[0],
-		Base:       args[1],
-		Head:       args[2],
-		ShowAll:    cmd.all,
-		Short:      cmd.short,
-		AheadOnly:  cmd.aheadOnly,
-		BehindOnly: cmd.behindOnly,
-		Json:       cmd.json,
+		GitPat:       cmd.pat,
+		Org:          args[0],
+		Base:         args[1],
+		Head:         args[2],
+		ShowAll:      cmd.all,
+		Short:        cmd.short,
+		AheadOnly:    cmd.aheadOnly,
+		BehindOnly:   cmd.behindOnly,
+		Json:         cmd.json,
+		InclArchived: cmd.inclArchived,
 	}
 
 	if cfg.GitPat == "" {
